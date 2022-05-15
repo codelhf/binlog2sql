@@ -81,7 +81,7 @@ class Binlog2sql(object):
 
         origin_file = create_file(self.output_path, 'origin.sql')
         # to simplify code, we do not use flock for tmp_file.
-        tmp_file = create_unique_file('%s.%s' % (self.conn_setting['host'], self.conn_setting['port']))
+        tmp_file = create_unique_file('%s.%s.txt' % (self.conn_setting['host'], self.conn_setting['port']))
         with file_open(origin_file, "w") as f_origin, file_temp_open(tmp_file, "w") as f_tmp, \
                 self.connection as cursor:
             for binlog_event in stream:
@@ -142,10 +142,10 @@ class Binlog2sql(object):
                 """print rollback sql from tmp_file"""
                 if self.output_console:
                     print('###### rollback sql ######')
-                with file_open(rollback_file, "w") as f_rollback, file_open(tmp_file, "rb") as f_tmp1:
+                with file_open(rollback_file, "w") as f_rollback, file_temp_open(tmp_file, "r") as f_tmp1:
                     # 从缓存文件读取原始SQL
                     for line in reversed_lines(f_tmp1):
-                        f_rollback.write(line.rstrip())
+                        f_rollback.write(line.rstrip() + '\n')
                         if self.output_console:
                             print(line.rstrip())
                     f_tmp1.close()

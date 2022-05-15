@@ -42,7 +42,7 @@ def create_unique_file(filename):
 
 @contextmanager
 def file_open(filename, mode):
-    f = open(filename, mode)
+    f = open(filename, mode, encoding='utf-8')
     try:
         yield f
     finally:
@@ -51,12 +51,13 @@ def file_open(filename, mode):
 
 @contextmanager
 def file_temp_open(filename, mode):
-    f = open(filename, mode)
+    f = open(filename, mode, encoding='utf-8')
     try:
         yield f
     finally:
         f.close()
-        os.remove(filename)
+        if os.path.exists(filename):
+            os.remove(filename)
 
 
 def is_dml_event(event):
@@ -108,21 +109,18 @@ def reversed_lines(fin):
     """Generate the lines of file in reverse order."""
     part = ''
     for block in reversed_blocks(fin):
-        if PY3PLUS:
-            try:
-                # block = block.decode("utf-8")
-                block = platform.system() == 'Windows' and block.decode("gbk") or block.decode("utf-8")
-            except:
-                continue
+        # if PY3PLUS:
+        #     try:
+        #         block = platform.system() == 'Windows' and block.decode("gbk") or block.decode("utf-8")
+        #     except UnicodeDecodeError as ed_err:
+        #         print(ed_err)
+        #         continue
         for c in reversed(block):
+            if type(c) != str:
+                c = str(c)
             if c == '\n' and part:
                 yield part[::-1]
                 part = ''
-            if c == '\r\n' and part:
-                yield part[::-1]
-                part = ''
-            if type(c) != str:
-                c = str(c)
             part += c
     if part:
         yield part[::-1]
